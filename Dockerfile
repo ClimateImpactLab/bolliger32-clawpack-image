@@ -29,6 +29,7 @@ RUN conda install --yes -c conda-forge \
     numpy=1.14.2 \
     pandas \
     python-blosc=1.4.4 \
+    pyshp \
     scipy \
     scikit-image \
     tornado \
@@ -40,7 +41,7 @@ RUN conda install --yes --channel conda-forge/label/dev geopandas
 
 USER root
 RUN apt-get update \
-  && apt-get install -yq --no-install-recommends libfuse-dev nano fuse gnupg gnupg2
+  && apt-get install -yq --no-install-recommends libfuse-dev nano fuse gnupg gnupg2 make
 
 
 RUN export GCSFUSE_REPO=gcsfuse-xenial \
