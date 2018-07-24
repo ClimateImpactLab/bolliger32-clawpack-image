@@ -5,11 +5,44 @@ RUN wget -O /usr/local/bin/dumb-init https://github.com/Yelp/dumb-init/releases/
 RUN chmod +x /usr/local/bin/dumb-init
 
 USER root
-RUN apt-get update \
-  && apt-get install -yq --no-install-recommends libfuse-dev nano fuse gnupg gnupg2 make
 
-# conda installs
+
+## install packages from apt-get
+RUN apt-get update \
+  && apt-get install -yq --no-install-recommends libfuse-dev nano fuse gnupg gnupg2 make gfortran m4 curl libcurl4-openssl-dev
+
+
+## update conda and pip
 RUN conda update --yes conda
+RUN pip install --upgrade pip
+
+
+## get netcdf-c
+RUN conda install --yes hdf5 zlib
+RUN wget https://github.com/Unidata/netcdf-c/archive/v4.6.1.tar.gz && tar -xvzf v4.6.1.tar.gz
+ENV LD_LIBRARY_PATH=/opt/conda/lib
+ENV NCDIR=/usr/local
+RUN cd netcdf-c-4.6.1; \
+    CPPFLAGS=-I/opt/conda/include LDFLAGS=-L/opt/conda/lib ./configure --prefix=${NCDIR}; \
+    make check; \
+    make install; \
+    rm -rf /v4.6.1.tar.gz /netcdf-c-4.6.1
+    
+    
+## get netcdf-fortran
+RUN wget https://github.com/Unidata/netcdf-fortran/archive/v4.4.4.tar.gz && tar -xvzf v4.4.4.tar.gz
+ENV LD_LIBRARY_PATH=${NCDIR}/lib:/opt/conda/lib
+ENV CC=gcc
+ENV FC=gfortran
+ENV NFDIR=/usr/local
+RUN cd netcdf-fortran-4.4.4; \
+    CPPFLAGS=-I${NCDIR}/include LDFLAGS=-L${NCDIR}/lib ./configure --prefix=${NFDIR}; \
+    make check; \
+    make install; \
+    rm -rf /v4.4.4.tar.gz /netcdf-fortran-4.4.4
+
+
+## conda installs
 RUN conda install --yes -c conda-forge \
     bokeh=0.12.14 \
     click \
@@ -52,7 +85,9 @@ RUN conda install --yes -c conda-forge \
     xesmf \
     zarr \
     zict
-
+    
+    
+## GCSFUSE
 RUN export GCSFUSE_REPO=gcsfuse-xenial \
   && echo "deb http://packages.cloud.google.com/apt $GCSFUSE_REPO main" | tee /etc/apt/sources.list.d/gcsfuse.list \
   && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
@@ -60,17 +95,8 @@ RUN export GCSFUSE_REPO=gcsfuse-xenial \
   && apt-get install gcsfuse \
   && alias googlefuse=/usr/bin/gcsfuse
 
-RUN pip install --upgrade pip
 
-# link gcc and gfortran to make clawpack install happy
-RUN ln -s /opt/conda/bin/x86_64-conda_cos6-linux-gnu-gcc /opt/conda/bin/gcc \
-    && ln -s /opt/conda/bin/x86_64-conda_cos6-linux-gnu-gfortran /opt/conda/bin/gfortran
-
-# setting env vars for Clawpack
-ENV FC=x86_64-conda_cos6-linux-gnu-gfortran
-ENV CLAW=/clawpack
-
-# install pip pacakges including clawpack
+# install pip pacakges
 RUN pip install \
     google-cloud==0.32.0 \
     google-cloud-storage \
@@ -81,13 +107,19 @@ RUN pip install \
     git+https://github.com/dask/gcsfs@2fbdc27e838a531ada080886ae778cb370ae48b8 \
     git+https://github.com/jupyterhub/nbserverproxy \
     --no-cache-dir
-
+    
+    
+## install Clawpack
+ENV CLAW=/clawpack
 RUN pip install --src=/ -e git+https://github.com/ClimateImpactLab/clawpack.git#egg=clawpack --no-cache-dir
 
-# clean up
+
+## clean up
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN conda clean -tipsy
 
+
+## misc
 ENV OMP_NUM_THREADS=1
 ENV DASK_TICK_MAXIMUM_DELAY=5s
 
