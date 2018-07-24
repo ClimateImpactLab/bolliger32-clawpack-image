@@ -4,20 +4,30 @@ FROM continuumio/miniconda3:4.4.10
 RUN wget -O /usr/local/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.0/dumb-init_1.2.0_amd64
 RUN chmod +x /usr/local/bin/dumb-init
 
+USER root
+RUN apt-get update \
+  && apt-get install -yq --no-install-recommends libfuse-dev nano fuse gnupg gnupg2 make
+
+# conda installs
 RUN conda update --yes conda
 RUN conda install --yes -c conda-forge \
     bokeh=0.12.14 \
+    click \
     cytoolz \
     datashader \
     dask=0.17.2 \
-    gdal=2.2.4 \
-    esmpy \
-    zarr \
     distributed=1.21.5 \
+    esmpy \
     fastparquet \
+    fusepy \
+    gdal=2.2.4 \
+    geopandas \
+    gfortran_linux-64 \
     git \
     ipywidgets \
+    jedi \
     jupyterlab \
+    kubernetes \
     holoviews \
     lz4=1.1.0 \
     matplotlib \
@@ -28,21 +38,20 @@ RUN conda install --yes -c conda-forge \
     numcodecs \
     numpy=1.14.2 \
     pandas \
-    python-blosc=1.4.4 \
+    pyasn1 \
     pyshp \
-    scipy \
+    python-blosc=1.4.4 \
+    rasterio \
     scikit-image \
+    scipy \
+    setuptools \
     tornado \
+    urllib3 \
+    wget \
     xarray=0.10.7 \
-    zict \
-    rasterio
-
-RUN conda install --yes --channel conda-forge/label/dev geopandas
-
-USER root
-RUN apt-get update \
-  && apt-get install -yq --no-install-recommends libfuse-dev nano fuse gnupg gnupg2 make
-
+    xesmf \
+    zarr \
+    zict
 
 RUN export GCSFUSE_REPO=gcsfuse-xenial \
   && echo "deb http://packages.cloud.google.com/apt $GCSFUSE_REPO main" | tee /etc/apt/sources.list.d/gcsfuse.list \
@@ -51,27 +60,29 @@ RUN export GCSFUSE_REPO=gcsfuse-xenial \
   && apt-get install gcsfuse \
   && alias googlefuse=/usr/bin/gcsfuse
 
-# fix https://github.com/ContinuumIO/anaconda-issues/issues/542
-RUN conda install --yes -c conda-forge setuptools
-
 RUN pip install --upgrade pip
-RUN pip install wget google-cloud==0.32.0 google-cloud-storage gsutil fusepy click jedi kubernetes pyasn1 click urllib3 xesmf --no-cache-dir
 
-RUN pip install daskernetes==0.1.3 \
-                git+https://github.com/dask/dask-kubernetes@5ba08f714ef38e585e9f2038b6be530c578b96dd \
-                git+https://github.com/ioam/holoviews@3f015c0a531f54518abbfecffaac72a7b3554ed3\
-                git+https://github.com/dask/gcsfs@2fbdc27e838a531ada080886ae778cb370ae48b8\
-                git+https://github.com/jupyterhub/nbserverproxy \
-                --no-cache-dir
+# link gcc and gfortran to make clawpack install happy
+RUN ln -s /opt/conda/bin/x86_64-conda_cos6-linux-gnu-gcc /opt/conda/bin/gcc \
+    && ln -s /opt/conda/bin/x86_64-conda_cos6-linux-gnu-gfortran /opt/conda/bin/gfortran
 
-RUN apt-get install -y gfortran
-
-RUN git clone --recurse-submodules -j4 https://github.com/ClimateImpactLab/clawpack.git \
-    && cd clawpack \
-    && pip install -e .
-
+# setting env vars for Clawpack
+ENV FC=x86_64-conda_cos6-linux-gnu-gfortran
 ENV CLAW=/clawpack
-ENV FC=gfortran
+
+# install pip pacakges including clawpack
+RUN pip install \
+    google-cloud==0.32.0 \
+    google-cloud-storage \
+    gsutil \
+    daskernetes==0.1.3 \
+    git+https://github.com/dask/dask-kubernetes@5ba08f714ef38e585e9f2038b6be530c578b96dd \
+    git+https://github.com/ioam/holoviews@3f015c0a531f54518abbfecffaac72a7b3554ed3 \
+    git+https://github.com/dask/gcsfs@2fbdc27e838a531ada080886ae778cb370ae48b8 \
+    git+https://github.com/jupyterhub/nbserverproxy \
+    --no-cache-dir
+
+RUN pip install --src=/ -e git+https://github.com/ClimateImpactLab/clawpack.git#egg=clawpack --no-cache-dir
 
 # clean up
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
