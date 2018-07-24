@@ -45,6 +45,7 @@ RUN cd netcdf-fortran-4.4.4; \
 ## conda installs
 RUN conda install --yes -c conda-forge \
     bokeh=0.12.14 \
+    cartopy \
     click \
     cytoolz \
     datashader \
