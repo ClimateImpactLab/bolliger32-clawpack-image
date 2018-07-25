@@ -8,7 +8,7 @@ USER root
 
 ## install packages from apt-get
 RUN apt-get update \
-  && apt-get install -yq --no-install-recommends libfuse-dev nano fuse gnupg gnupg2 make gfortran m4 curl libcurl4-openssl-dev liblapack-dev
+  && apt-get install -yq libfuse-dev nano fuse gnupg gnupg2 make gfortran m4 curl libcurl4-openssl-dev liblapack-dev g++
 ENV CC=gcc
 ENV FC=gfortran
 
@@ -21,7 +21,7 @@ RUN pip install --upgrade pip
 # set library location
 ENV PREFIXDIR=/usr/local
 
-# get zlib
+## get zlib
 RUN wget https://zlib.net/zlib-1.2.11.tar.gz && tar -xvzf zlib-1.2.11.tar.gz
 RUN cd zlib-1.2.11; \
     ./configure --prefix=${PREFIXDIR}; \
@@ -29,32 +29,36 @@ RUN cd zlib-1.2.11; \
     make install; \
     rm -rf /zlib-1.2.11.tar.gz /zlib-1.2.11
 
-# get hdf5-1.8
+
+## get hdf5-1.8
 RUN wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8/hdf5-1.8.21/src/hdf5-1.8.21.tar.gz && tar -xvzf hdf5-1.8.21.tar.gz
 RUN cd hdf5-1.8.20; \
     ./configure --with-zlib=${PREFIXDIR} --prefix=${PREFIXDIR} --enable-hl; \
     make check; \
     make install; \
     rm -rf /hdf5-1.8.21.tar.gz /hdf5-1.8.21
+    
 
-# get hdf5-1.10
+## get hdf5-1.10
 RUN wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.2/src/hdf5-1.10.2.tar.gz && tar -xvzf hdf5-1.10.2.tar.gz
 RUN cd hdf5-1.10.2; \
-    ./configure --with-zlib=${PREFIXDIR} --prefix=${PREFIXDIR} --enable-hl; \
+    ./configure --with-zlib=${PREFIXDIR} --prefix=${PREFIXDIR} --enable-hl --enable-shared; \
     make check; \
     make install; \
-    rm -rf /hdf5-1.10.2.tar.gz /hdf5-1.10.2.tar
+    rm -rf /hdf5-1.10.2.tar.gz /hdf5-1.10.2
+
 
 ## get netcdf-c
 RUN wget https://github.com/Unidata/netcdf-c/archive/v4.6.1.tar.gz && tar -xvzf v4.6.1.tar.gz
 ENV LD_LIBRARY_PATH=${PREFIXDIR}/lib
 RUN cd netcdf-c-4.6.1; \
-    CPPFLAGS=-I${PREFIXDIR}/include LDFLAGS=-L${PREFIXDIR}/lib ./configure --prefix=${PREFIXDIR}; \
+    CPPFLAGS=-I${PREFIXDIR}/include LDFLAGS=-L${PREFIXDIR}/lib ./configure --prefix=${PREFIXDIR} --enable-netcdf-4 --enable-shared --enable-dap; \
     make check; \
     make install; \
     rm -rf /v4.6.1.tar.gz /netcdf-c-4.6.1
-       
-# get netcdf-fortran
+    
+    
+## get netcdf-fortran
 RUN wget https://github.com/Unidata/netcdf-fortran/archive/v4.4.4.tar.gz && tar -xvzf v4.4.4.tar.gz
 RUN cd netcdf-fortran-4.4.4; \
     CPPFLAGS=-I${PREFIXDIR}/include LDFLAGS=-L${PREFIXDIR}/lib ./configure --prefix=${PREFIXDIR}; \
@@ -87,7 +91,6 @@ RUN conda install --yes -c conda-forge \
     lz4=1.1.0 \
     matplotlib \
     nb_conda_kernels \
-    netcdf4 \
     nomkl \
     nose \
     numba=0.37.0 \
@@ -121,6 +124,7 @@ RUN export GCSFUSE_REPO=gcsfuse-xenial \
 
 # install pip pacakges
 RUN pip install \
+    netCDF4 \
     google-cloud==0.32.0 \
     google-cloud-storage \
     gsutil \
