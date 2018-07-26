@@ -80,7 +80,6 @@ RUN conda install --yes -c conda-forge \
     fastparquet \
     fusepy \
     gdal=2.2.4 \
-    geopandas \
     gfortran_linux-64 \
     git \
     ipywidgets \
@@ -111,6 +110,8 @@ RUN conda install --yes -c conda-forge \
     xesmf \
     zarr \
     zict
+    
+RUN conda install --yes --channel conda-forge/label/dev geopandas
     
     
 ## GCSFUSE
