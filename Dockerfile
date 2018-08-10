@@ -66,6 +66,10 @@ ENV CLAW=/clawpack
 RUN pip install --src=/ -e git+https://github.com/ClimateImpactLab/clawpack.git#egg=clawpack --no-cache-dir
 
 
+## install nose for clawpack testing
+conda install --yes -c conda-forge nose
+
+
 ## clean up
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN conda clean -tipsy
