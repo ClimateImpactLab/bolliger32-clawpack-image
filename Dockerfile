@@ -1,4 +1,4 @@
-FROM rhodium/worker:2018-08-07.01
+FROM rhodium/worker:2018-08-13.01
 
 USER root
 
