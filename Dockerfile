@@ -68,7 +68,7 @@ RUN pip install --src=/ -e git+https://github.com/ClimateImpactLab/clawpack.git#
 
 ## install nose for clawpack testing
 RUN conda install --yes -c conda-forge \
-    nose
+    nose \
     pyshp
 
 
