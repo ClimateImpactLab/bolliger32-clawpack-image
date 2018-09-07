@@ -1,4 +1,4 @@
-FROM rhodium/worker:19f9969fa333efc87445d5d6deea0096d7d23d81
+FROM rhodium/worker:ece12fd625eafef8d17329a080af807f265a399f
 
 USER root
 
