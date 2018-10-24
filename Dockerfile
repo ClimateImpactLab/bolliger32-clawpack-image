@@ -1,4 +1,4 @@
-FROM rhodium/worker:v0.2.4
+FROM rhodium/worker:v0.2.5
 
 ## install Clawpack
 ENV CLAW=/clawpack
