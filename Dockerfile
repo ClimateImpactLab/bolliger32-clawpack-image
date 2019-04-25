@@ -15,6 +15,4 @@ RUN source activate worker && \
 RUN source activate worker && \
   pip install pytides rhg_compute_tools>=0.1.6 --no-cache-dir
 
-RUN
-
 ENTRYPOINT ["/usr/local/bin/dumb-init", "/usr/bin/prepare.sh"]
